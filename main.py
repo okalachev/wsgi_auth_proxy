@@ -20,7 +20,8 @@ def send_data(environ):
         request_template = ('{method} {path} HTTP/1.1\r\n'
                             'Connection: close\r\n'
                             'Host: {host}\r\n'
-                            '{headers}\r\n')
+                            '{headers}\r\n'
+                            '{data}')
         black_list_headers = frozenset(('HOST', 'CONNECTION', 'COOKIE'))
         headers_list = []
         for key, value in environ.iteritems():
@@ -45,7 +46,8 @@ def send_data(environ):
             method=environ['REQUEST_METHOD'],
             path=environ['REQUEST_URI'],
             host=HOST,
-            headers=headers_str)
+            headers=headers_str,
+            data=input_file)
         g_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         g_socket.connect((HOST, PORT))
         g_socket.sendall(request)
