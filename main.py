@@ -60,7 +60,6 @@ def send_data(environ):
 
 
 def check_environ(environ):
-    return True
     return (environ.get('ADFS_PERSONID', '').isdigit() and
             'ADFS_LOGIN' in environ and
             'ADFS_EMAIL' in environ and
