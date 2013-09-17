@@ -35,6 +35,9 @@ def send_data(environ):
         headers_list.append(('X-Auth-Fullname', auth_data.full_name))
         if 'CONTENT_TYPE' in environ:
             headers_list.append(('Content-Type', environ['CONTENT_TYPE']))
+        input_file = environ['wsgi.input'].read()
+        if input_file:
+            headers_list.append(('Content-Length', str(len(input_file))))
         header_template = '{name}: {value}\r\n'
         headers_str = ''.join(header_template.format(name=h[0], value=h[1])
                               for h in headers_list)
