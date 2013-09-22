@@ -79,8 +79,12 @@ def application(environ, start_response):
         response = send_data(environ).split('\r\n\r\n', 1)
         raw_headers = response[0].split('\r\n')
         _, status_line = raw_headers[0].split(' ', 1)
-        headers = [tuple(p.strip() for p in h.split(':', 1))
-                   for h in raw_headers[1:]]
+        headers = []
+        blacklisted_headers = frozenset('set-cookie', 'connection')
+        for header in raw_headers[1:]:
+            header_name = header.split(':', 1)[0].strip()
+            if header_name.lower() not in blacklisted_headers:
+                headers.append((header_name, header.split(':', 1)[1].strip()))
         start_response(status_line, headers)
         if len(response) > 1:
             yield response[1]
