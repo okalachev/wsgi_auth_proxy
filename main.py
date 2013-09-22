@@ -66,6 +66,19 @@ def check_environ(environ):
             'ADFS_LOGIN' in environ and
             'ADFS_EMAIL' in environ and
             'ADFS_FULLNAME' in environ)
+    
+    
+def process_chunks(data, is_chunked_encoding):
+    if not is_chunked_encoding:
+        return data
+    result = ''
+    while True:
+        chunk_length, value = data.split('\r\n', 1)
+        chunk_length_res = int(chunk_length, 16)
+        if chunk_length_res == 0:
+            return result
+        result += value[:chunk_length_res]
+        data = value[chunk_length_res + 2:]
 
 
 def application(environ, start_response):
@@ -80,14 +93,20 @@ def application(environ, start_response):
         raw_headers = response[0].split('\r\n')
         _, status_line = raw_headers[0].split(' ', 1)
         headers = []
-        blacklisted_headers = frozenset('set-cookie', 'connection')
+        blacklisted_headers = frozenset(['set-cookie', 'connection',
+                                         'transfer-encoding'])
+        is_chunked_encoding = False
         for header in raw_headers[1:]:
-            header_name = header.split(':', 1)[0].strip()
-            if header_name.lower() not in blacklisted_headers:
-                headers.append((header_name, header.split(':', 1)[1].strip()))
+            header_name, header_value = \
+                [h.strip() for h in header.split(':', 1)]
+            if header_name and header_name.lower() not in blacklisted_headers:
+                headers.append((header_name, header_value))
+            if (header_name.lower() == 'transfer-encoding' and
+                    header_value.lower() == 'chunked'):
+                is_chunked_encoding = True
         start_response(status_line, headers)
         if len(response) > 1:
-            yield response[1]
+            yield process_chunks(response[1], is_chunked_encoding)
         else:
             yield ''
         
