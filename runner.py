@@ -15,6 +15,7 @@ def test_wrapper(environ, start_response):
     environ['ADFS_LOGIN'] = 'Tester'
     environ['ADFS_EMAIL'] = 'xni@github.com'
     environ['ADFS_FULLNAME'] = 'Konstantin Nikitin'
+    environ['CERN_PROJECT'] = 'lhcb'
     for chunk in main.application(environ, start_response):
         yield chunk
 
@@ -22,5 +23,9 @@ def test_wrapper(environ, start_response):
 if __name__ == '__main__':
     server = wsgiserver.CherryPyWSGIServer(
         ('0.0.0.0', 8070), test_wrapper)
-    server.start()
-    
+    try:
+        print "Starting server at 127.0.0.1:8070"
+        server.start()
+    except KeyboardInterrupt:
+        server.stop()
+

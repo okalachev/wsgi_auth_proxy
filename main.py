@@ -3,11 +3,12 @@ import socket
 from threading import Lock
 
 
-AuthData = namedtuple('AuthData', 'id login email full_name')
+AuthData = namedtuple('AuthData', 'id login email full_name cern_project')
 
 
 socket_lock = Lock()
-HOST = 'www.yandex.ru'
+#HOST = 'w80.cern.yandex.net'
+HOST = 'cern-ei01.vs.os.yandex.net'
 PORT = 80
 
 
@@ -15,7 +16,8 @@ def send_data(environ):
     auth_data = AuthData(environ.get('ADFS_PERSONID', '0'),
                          environ.get('ADFS_LOGIN', 'Tester'),
                          environ.get('ADFS_EMAIL', 'xni@github.com'),
-                         environ.get('ADFS_FULLNAME', 'Konstantin Nikitin'))
+                         environ.get('ADFS_FULLNAME', 'Konstantin Nikitin'),
+                         environ.get('CERN_PROJECT', 'lhcb'))
     with socket_lock:
         request_template = ('{method} {path} HTTP/1.1\r\n'
                             'Connection: close\r\n'
@@ -34,6 +36,7 @@ def send_data(environ):
         headers_list.append(('X-Auth-Login', auth_data.login))
         headers_list.append(('X-Auth-Email', auth_data.email))
         headers_list.append(('X-Auth-Fullname', auth_data.full_name))
+        headers_list.append(('X-Cern-Project', auth_data.cern_project))
         if 'CONTENT_TYPE' in environ:
             headers_list.append(('Content-Type', environ['CONTENT_TYPE']))
         input_file = environ['wsgi.input'].read()
@@ -48,6 +51,7 @@ def send_data(environ):
             host=HOST,
             headers=headers_str,
             data=input_file)
+        print request
         g_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         g_socket.connect((HOST, PORT))
         g_socket.sendall(request)
@@ -66,8 +70,8 @@ def check_environ(environ):
             'ADFS_LOGIN' in environ and
             'ADFS_EMAIL' in environ and
             'ADFS_FULLNAME' in environ)
-    
-    
+
+
 def process_chunks(data, is_chunked_encoding):
     if not is_chunked_encoding:
         return data
@@ -109,4 +113,4 @@ def application(environ, start_response):
             yield process_chunks(response[1], is_chunked_encoding)
         else:
             yield ''
-        
+
