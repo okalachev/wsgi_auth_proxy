@@ -7,6 +7,7 @@ this functionality, but don't want to install Apache server.
 
 from cherrypy import wsgiserver
 
+import os
 import main
 
 
@@ -15,7 +16,7 @@ def test_wrapper(environ, start_response):
     environ['ADFS_LOGIN'] = 'Tester'
     environ['ADFS_EMAIL'] = 'xni@github.com'
     environ['ADFS_FULLNAME'] = 'Konstantin Nikitin'
-    environ['CERN_PROJECT'] = 'lhcb'
+    environ['CERN_PROJECT'] = os.environ.get('CERN_PROJECT', 'lhcb')
     for chunk in main.application(environ, start_response):
         yield chunk
 
